@@ -143,10 +143,9 @@ jobs:
       - name: Build Docker image
         run: |
           # Assuming the .whl file is now in $GITHUB_WORKSPACE/bike_sharing_api
-          # Get the current version, increment it, and tag the new image
-          VERSION=$(date +%Y%m%d%H%M%S)  # Using timestamp as version, you can use semantic versioning if needed
-          echo "$VERSION"
-          docker build -t immortalhsk/bikesharing_api:$VERSION bike_sharing_api
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USER }}/bikesharing_api:${{ github.run_id }}"
+          echo "$IMAGE_TAG"
+          docker build -t $IMAGE_TAG bike_sharing_api
 
       - name: List Docker image
         run: |
@@ -156,4 +155,4 @@ jobs:
       - name: Push Docker image to DockerHub
         run: |
           # Push the Docker image to private registry
-          docker push immortalhsk/bikesharing_api:$VERSION
+          docker push $IMAGE_TAG
