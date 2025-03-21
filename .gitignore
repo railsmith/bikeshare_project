@@ -1,5 +1,6 @@
 # Ignore Python cache files
 __pycache__/
+cicd/
 *.py[cod]
 
 # Ignore distributable files like .whl, .tar.gz
