@@ -143,7 +143,7 @@ jobs:
       - name: Build Docker image
         run: |
           # Assuming the .whl file is now in $GITHUB_WORKSPACE/bike_sharing_api
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USER }}/bikesharing_api:${{ github.run_id }}"
+          IMAGE_TAG="${{secrets.DOCKERHUB_USER}}/bikesharing_api:${{github.run_number}}"
           echo "$IMAGE_TAG"
           docker build -t $IMAGE_TAG bike_sharing_api
 
@@ -155,4 +155,6 @@ jobs:
       - name: Push Docker image to DockerHub
         run: |
           # Push the Docker image to private registry
+          IMAGE_TAG="${{secrets.DOCKERHUB_USER}}/bikesharing_api:${{github.run_number}}"
+          echo "$IMAGE_TAG"
           docker push $IMAGE_TAG
