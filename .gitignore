@@ -1,0 +1,11 @@
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore distributable files like .whl, .tar.gz
+*.whl
+*.tar.gz
+*.zip
+
+# Ignore trained model files (e.g., .pkl files)
+*.pkl
