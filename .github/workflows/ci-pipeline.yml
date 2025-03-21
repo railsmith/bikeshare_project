@@ -38,6 +38,12 @@ jobs:
       - name: Train model
         run: |
           python bikeshare_model/train_pipeline.py
+
+      - name: Upload Pipeline Package as Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: pipeline-package
+          path: $GITHUB_WORKSPACE/bikeshare_model/trained_models/*.pkl
           
   testing:
     # The type of runner that the job will run on
@@ -58,6 +64,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements/test_requirements.txt
+
+      - name: Download Pipeline Package Artifact
+        uses: actions/download-artifact@v4.2.1
+        with:
+          name: pipeline-package
+          path: $GITHUB_WORKSPACE/bikeshare_model/trained_models  # Download to the trained_models directory
 
       - name: Run tests
         run: |
@@ -86,6 +98,12 @@ jobs:
       - name: Install Build package
         run: |
           pip install build
+
+      - name: Download Pipeline Package Artifact
+        uses: actions/download-artifact@v4.2.1
+        with:
+          name: pipeline-package
+          path: $GITHUB_WORKSPACE/bikeshare_model/trained_models  # Download to the trained_models directory
 
       - name: Build package
         run: |
