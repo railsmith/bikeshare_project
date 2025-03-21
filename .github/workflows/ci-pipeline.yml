@@ -1,0 +1,139 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Bikeshare_CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  model_training:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: 3.12.1
+
+      # Runs a set of commands using the runners shell
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/requirements.txt
+
+      - name: Train model
+        run: |
+          python bikeshare_model/train_pipeline.py
+          
+  testing:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: model_training
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: 3.12.1
+
+      # Runs a set of commands using the runners shell
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/test_requirements.txt
+
+      - name: Run tests
+        run: |
+          pytest
+
+  build_package:
+     # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: testing
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: 3.12.1
+
+      # Runs a set of commands using the runners shell
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/test_requirements.txt
+
+      - name: Install Build package
+        run: |
+          pip install build
+
+      - name: Build package
+        run: |
+          python -m build
+
+      - name: Upload Wheel Package as Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: wheel-package
+          path: dist/*.whl
+
+  build_push_image:
+    runs-on: ubuntu-latest
+    needs: build_package
+
+     # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3.10.0
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Download Wheel Package Artifact
+        uses: actions/download-artifact@v4.2.1
+        with:
+          name: wheel-package
+          path: $GITHUB_WORKSPACE/bike_sharing_api  # Download to the bike_sharing_api directory
+
+      - name: Build Docker image
+        run: |
+          # Assuming the .whl file is now in $GITHUB_WORKSPACE/bike_sharing_api
+          docker build -t ${{secrets.DOCKERHUB_USER}}/bikesharing_api:latest $GITHUB_WORKSPACE/bike_sharing_api
+
+      - name: Versionize Docker image
+        run: |
+          # Get the current version, increment it, and tag the new image
+          VERSION=$(date +%Y%m%d%H%M%S)  # Using timestamp as version, you can use semantic versioning if needed
+          docker tag ${{secrets.DOCKERHUB_USER}}/bikesharing_api:latest ${{secrets.DOCKERHUB_USER}}/bikesharing_api:$VERSION
+          
+      - name: Push Docker image to DockerHub
+        run: |
+          docker push ${{secrets.DOCKERHUB_USER}}/bikesharing_api:latest
+          docker push ${{secrets.DOCKERHUB_USER}}/bikesharing_api:$VERSION
