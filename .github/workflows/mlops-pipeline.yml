@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Bikeshare_CI
+name: Bikeshare_MLOps
 
 # Controls when the workflow will run
 on:
@@ -170,7 +170,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_PRIVATE_KEY }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.HOSTNAME }} >> ~/.ssh/known_hosts
           
       - name: Docker Login
         run: |
